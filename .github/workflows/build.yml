@@ -5,7 +5,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Get Date
         id: get-date
@@ -13,14 +13,14 @@ jobs:
           echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
       - name: Buildozer Action
-        uses: ArtemGovorov/buildozer-action@v1
+        uses: ArtemGovorov/buildozer-action@v1.4.1
         id: buildozer
         with:
           workdir: .
           buildozer_version: stable
 
       - name: Upload APK
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: sd-ai-apk-${{ steps.get-date.outputs.date }}
           path: ${{ steps.buildozer.outputs.filename }}
