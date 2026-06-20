@@ -3,24 +3,40 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get Date
-        id: get-date
-        run: |
-          echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
-
-      - name: Buildozer Action
-        uses: ArtemGovorov/buildozer-action@v1.4.1
-        id: buildozer
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          workdir: .
-          buildozer_version: stable
+          python-level: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache libncurses5:i386 libstdc++6:i386 libgtk2.0-0:i386 libpangox-1.0-0:i386 libpangoxft-1.0-0:i386 libidn11:i386 python3-all-dev webp
+          pip install --upgrade pip
+          pip install buildozer cython kivy
+
+      - name: Create Buildozer Spec
+        run: |
+          buildozer init
+          # تغییر تنظیمات به صورت خودکار در فایل ساخته شده
+          sed -i 's/^title =.*/title = sd ai/' buildozer.spec
+          sed -i 's/^package.name =.*/package.name = chatbot.ai/' buildozer.spec
+          sed -i 's/^package.domain =.*/package.domain = com.sd/' buildozer.spec
+          sed -i 's/^requirements =.*/requirements = python3,kivy,android,pyjnius/' buildozer.spec
+          sed -i 's|^#\? \?icon.filename =.*|icon.filename = %(source.dir)s/sdicon.png|' buildozer.spec
+          sed -i 's/^fullscreen =.*/fullscreen = 0/' buildozer.spec
+          sed -i 's|^#\? \?android.permissions =.*|android.permissions = INTERNET|' buildozer.spec
+
+      - name: Build with Buildozer
+        run: |
+          yes | buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: sd-ai-apk-${{ steps.get-date.outputs.date }}
-          path: ${{ steps.buildozer.outputs.filename }}
+          name: sd-ai-apk
+          path: bin/*.apk
